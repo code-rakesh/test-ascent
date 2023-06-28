@@ -12,6 +12,7 @@ mongoose.connect(
     }
 ).then((res)=> console.log('connected to database')).catch(err=> console.log(err.message))
 const router = require('./app/routes/index')
+app.use(express.json())
 app.use('/api/v1',router)
 const PORT = process.env.PORT || 3001
 app.listen(PORT, ()=> {console.log('server started on ', PORT)})
