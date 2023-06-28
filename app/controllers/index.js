@@ -2,6 +2,7 @@ const cron = require('node-cron')
 const Schedule = require('../models/Schedule')
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRIDAPIKEY);
+const nodemailer = require('nodemailer');
 const addSchedule = async (req, res) => {
     const { name, email, message, scheduledAtDay, scheduledAtTime } = req?.body
     const exactTime = scheduledAtDay + "  " + scheduledAtTime
@@ -54,27 +55,49 @@ const removeSchedule = async (req, res) => {
     })
 }
 
+const getEmails = async () => {
+    const items = await Schedule.find({ scheduledAt: { $lt: new Date().getTime() }, isDeleted: false, didSend: false })
+    var emails = items.map((item)=> {
+        return {email: item?.email, message: item?.message}
+    })
+    return emails
+}
 
+const sendEmail = async() => {
+    const emails = await getEmails()
+    console.log(emails)
+    for (item of emails){
+        console.log(typeof item.email)
+        let mailTransporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'code.rakeshkrishnan@gmail.com',
+                pass: '*************'
+            }
+        });
+         
+        let mailDetails = {
+            from: 'xyz@gmail.com',
+            to: 'abc@gmail.com',
+            subject: 'Test mail',
+            text: 'Node.js testing mail for GeeksforGeeks'
+        };
+         
+        mailTransporter.sendMail(mailDetails, function(err, data) {
+            if(err) {
+                console.log('Error Occurs');
+            } else {
+                console.log('Email sent successfully');
+            }
+        });
+    }
+}
 
 cron.schedule('* * * * *', async () => {
     // This function will run every minute
     console.log('Cron job is running');
-    const items = await Schedule.find({ scheduledAt: { $lt: new Date().getTime() } })
-    const msg = {
-        to: 'mailrkponline@gmail.com', // recipient's email address
-        from: 'code.rakeshkrishnan@gmail.com', // sender's email address
-        subject: 'Sending an email using SendGrid',
-        text: 'Hello, this is the plain text content of the email.',
-        html: '<p>Hello, this is the HTML content of the email.</p>',
-    };
-
-    // sgMail.send(msg)
-    //     .then(() => {
-    //         console.log('Email sent successfully');
-    //     })
-    //     .catch((error) => {
-    //         console.error(error);
-    //     });
+    sendEmail()
+    
 });
 
 module.exports = {
