@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-
-router.get('/test',(req, res)=> {console.log('reached router') })
+const {addSchedule} = require('../controllers/index')
+router.get('/test',addSchedule)
 
 module.exports = router
