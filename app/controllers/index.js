@@ -74,7 +74,7 @@ const updateSchedule = async (req, res) => {
 }
 const removeSchedule = async (req, res) => {
     try {
-       
+        const id = req?.params?.id
         const data = await removeScheduleService(id)
         
         return res.status(201).json({

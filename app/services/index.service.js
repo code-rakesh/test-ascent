@@ -29,7 +29,7 @@ const listScheduleService = async (query) => {
     const page = query?.page || 1
     const limit = query?.limit || 10
     const skip = (page-1) * limit
-    const list = await Schedule.find({}, { email: 1, scheduledAt: 1, message: 1, name: 1 }).skip(skip).limit(limit)
+    const list = await Schedule.find({isDeleted:false}, { email: 1, scheduledAt: 1, message: 1, name: 1 }).skip(skip).limit(limit)
     return list
 }
 
@@ -37,7 +37,7 @@ const listScheduleFailedService = async (query) => {
     const page = query?.page || 1
     const limit = query?.limit || 10
     const skip = (page-1) * limit
-    const list = await Schedule.find({didFailed:true}, { email: 1, scheduledAt: 1, message: 1, name: 1,failureReason:1 }).skip(skip).limit(limit)
+    const list = await Schedule.find({didFailed:true, isDeleted:false}, { email: 1, scheduledAt: 1, message: 1, name: 1,failureReason:1 }).skip(skip).limit(limit)
     return list
 }
 
@@ -97,8 +97,14 @@ const sendEmail = async() => {
                 }
             )
             console.log(send_email)
-            const updated = await Schedule.updateOne({_id: item.id}, {didSend:true})
-            console.log(updated)
+            if (sendmail?.rejected?.length && sendmail.rejected?.length > 0) {
+                const updated = await Schedule.updateOne({_id: item.id}, {didSend:true, didFailed:true, failureReason:'mail id does not exist or could not be delvered'})
+                console.log(updated)
+            } else {
+                const updated = await Schedule.updateOne({_id: item.id}, {didSend:true})
+                console.log(updated)
+            }
+            
         } catch (error) {
             const updated = await Schedule.updateOne({_id: item.id}, {didSend:true, didFailed:true, failureReason:error.message})
             console.log(updated)
